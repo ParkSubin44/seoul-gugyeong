@@ -9,7 +9,7 @@
           <a href="#board" :class="{ active: currentTab === 'board' }" @click="currentTab = 'board'">{{ t('navBoard') }}</a>
         </nav>
         
-        <!-- [요구사항 완벽 반영] 다국어 지원 - 한/영/중 3개국어 전환 토글 버튼 -->
+        <!-- 다국어 지원 토글 버튼 -->
         <div class="lang-switcher">
           <button :class="{ active: locale === 'ko' }" @click="locale = 'ko'" title="한국어">
             🇰🇷 <span class="lang-text">KR</span>
@@ -17,14 +17,14 @@
           <button :class="{ active: locale === 'en' }" @click="locale = 'en'" title="English">
             🇺🇸 <span class="lang-text">EN</span>
           </button>
-          <button :class="{ active: locale === 'zh' }" @click="locale = 'zh'" title="𡗗𡗗 (중국어)">
+          <button :class="{ active: locale === 'zh' }" @click="locale = 'zh'" title="中国语">
             🇨🇳 <span class="lang-text">CN</span>
           </button>
         </div>
       </div>
     </header>
 
-    <!-- ==================== [탭 1: 홈 (구별 관광지 및 지도)] ==================== -->
+    <!-- ==================== [탭 1: 홈 (구별 관광지/경로 및 지도)] ==================== -->
     <div v-if="currentTab === 'home'">
       <section class="hero">
         <h1>{{ t('heroTitle') }}</h1>
@@ -38,7 +38,7 @@
       </section>
 
       <main class="main-content">
-        <!-- 좌측: 진짜 Leaflet.js 지도 영역 -->
+        <!-- 좌측: Leaflet.js 지도 영역 -->
         <div class="map-section">
           <div id="map" class="seoul-map"></div>
           <div v-if="selectedDistrict && currentTmi" class="tmi-box">
@@ -48,7 +48,7 @@
           </div>
         </div>
 
-        <!-- 우측: 카테고리 탭 및 3열 그리드 콘텐츠 리스트 -->
+        <!-- 우측: 관광명소 / 여행경로 데이터 리스트 -->
         <div class="list-section">
           <div class="category-tabs">
             <button v-for="cat in categories" :key="cat" :class="{ active: selectedCategory === cat }" @click="selectedCategory = cat">
@@ -65,7 +65,6 @@
           <div v-else class="card-grid">
             <div v-for="(place, index) in filteredPlaces" :key="index" class="card">
               <span class="badge" :class="place.source">{{ t(place.source) }}</span>
-              <!-- 공공데이터 한글 제목 뒤에 다국어 구분 태그 접두사 노출 -->
               <h3>{{ getPlaceTitleFormatted(place.title) }}</h3>
               <p class="addr" v-if="place.addr1">📍 {{ place.addr1 }}</p>
             </div>
@@ -117,7 +116,7 @@
       </div>
     </div>
 
-    <!-- ==================== [3단계: OpenAI 자연어 챗봇 플로팅 UI] ==================== -->
+    <!-- ==================== [ OpenAI 자연어 챗봇 플로팅 UI] ==================== -->
     <div class="chatbot-wrapper">
       <button class="chatbot-toggle-btn" @click="isChatOpen = !isChatOpen">
         <span v-if="!isChatOpen">💬 {{ t('botToggle') }}</span>
@@ -156,53 +155,53 @@ import courseData from './assets/seoul_course.json';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// --- 🌐 [i18n 핵심] 한국어, 영어, 중국어(간체) 다국어 딕셔너리 정의 ---
+// --- 🌐 다국어 딕셔너리 정의 (관광지/추천경로 맞춤형 고도화) ---
 const locale = ref('ko'); 
 const messages = {
   ko: {
-    logo: '서울구경 (SeoulGugyeong)', navHome: '홈 (구별 관광지)', navBoard: '여행 커뮤니티',
-    heroTitle: '어느 구로 떠나볼까요?', heroSub: '서울의 구별 맞춤 여행 정보와 숨은 TMI를 지도로 확인해 보세요.',
+    logo: '서울유람 (SeoulTour)', navHome: '홈 (관광 및 경로)', navBoard: '여행 커뮤니티',
+    heroTitle: '어디로 유람을 떠나볼까요?', heroSub: '서울의 구별 맞춤 관광명소와 추천 여행 경로를 지도로 확인하세요.',
     selectDistrict: '구를 선택하세요', allSeoul: '서울 전체', noPlaces: '구를 선택하거나 다른 카테고리를 눌러보세요!',
-    관광명소: '관광명소', 문화시설: '문화시설', 쇼핑: '쇼핑', '축제/행사': '축제/행사',
-    tmiTitle: '추천 스팟 TMI', tmiPlace: '장소',
-    boardTitle: '익명 여행 게시판', boardSub: '서울 여행에 대한 팁과 후기를 자유롭게 나누세요. (비밀번호 필수!)',
-    writePost: '✍️ 새 글 작성하기', editPost: '📝 게시글 수정하기', postCount: '등록된 게시글', noPosts: '첫 번째 주인공이 되어 글을 남겨보세요!',
-    phTitle: '제목을 입력하세요', phPw: '수정/삭제용 비밀번호', phContent: '내용을 입력하세요',
+    관광명소: '관광명소', 여행경로: '추천 여행경로',
+    tmiTitle: '추천 스팟 TMI', tmiPlace: '대표 장소',
+    boardTitle: '익명 여행 게시판', boardSub: '서울 여행 팁과 추천 경로 후기를 자유롭게 공유하세요.',
+    writePost: '✍️ 새 글 작성하기', editPost: '📝 게시글 수정하기', postCount: '등록된 게시글', noPosts: '첫 번째로 여행 후기를 남겨보세요!',
+    phTitle: '제목을 입력하세요', phPw: '비밀번호', phContent: '내용을 입력하세요',
     btnRegister: '등록하기', btnEditComplete: '수정 완료', btnCancel: '취소', btnEdit: '수정', btnDelete: '삭제',
-    botToggle: '챗봇', botClose: '닫기', botHeader: 'SeoulSpotter AI 가이드', botSub: '서울의 축제, 쇼핑, 관광 정보를 물어보세요!',
-    botLoading: '답변을 생각하고 있습니다...', botPh: '예: 종로구 관광지 추천해줘', botSend: '전송', chatUser: '나', chatAi: 'AI 가이드',
+    botToggle: '챗봇', botClose: '닫기', botHeader: 'SeoulSpotter AI 가이드', botSub: '서울의 관광지 및 여행코스 정보를 물어보세요!',
+    botLoading: '답변을 생각하고 있습니다...', botPh: '예: 종로구 관광명소 코스 짜줘', botSend: '전송', chatUser: '나', chatAi: 'AI 가이드',
     alertAll: '모든 항목을 입력해 주세요!', alertWrongPw: '비밀번호가 일치하지 않습니다!', alertEdit: '글이 수정되었습니다.', alertReg: '글이 등록되었습니다.',
     alertEditMode: '비밀번호 입력 후 내용을 고쳐주세요.', alertPromptPw: '삭제를 위한 비밀번호 입력:', alertConfirmDel: '삭제하시겠습니까?', alertDelComplete: '삭제 완료되었습니다.',
     '종로구': '종로구', '중구': '중구', '용산구': '용산구', '성동구': '성동구', '마포구': '마포구', '강남구': '강남구', '영등포구': '영등포구', '동작구': '동작구'
   },
   en: {
-    logo: 'SeoulGugyeong', navHome: 'Home (Districts)', navBoard: 'Community',
-    heroTitle: 'Which District Shall We Explore?', heroSub: 'Check out travel info and hidden TMIs of Seoul on the map.',
+    logo: 'SeoulTour', navHome: 'Home (Tours & Routes)', navBoard: 'Community',
+    heroTitle: 'Where Shall We Travel in Seoul?', heroSub: 'Explore tourist attractions and customized travel routes on the map.',
     selectDistrict: 'Select a District', allSeoul: 'All of Seoul', noPlaces: 'Select a district or click another category!',
-    관광명소: 'Attractions', 문화시설: 'Culture', 쇼핑: 'Shopping', '축제/행사': 'Festivals',
+    관광명소: 'Attractions', 여행경로: 'Travel Routes',
     tmiTitle: 'Recommended Spot TMI', tmiPlace: 'Spot Name',
-    boardTitle: 'Anonymous Travel Board', boardSub: 'Share your tips and reviews about Seoul freely. (Password required!)',
-    writePost: '✍️ Write New Post', editPost: '📝 Edit Post', postCount: 'Registered Posts', noPosts: 'Be the first hero to leave a post!',
+    boardTitle: 'Anonymous Travel Board', boardSub: 'Share your tips and review travel routes freely.',
+    writePost: '✍️ Write New Post', editPost: '📝 Edit Post', postCount: 'Registered Posts', noPosts: 'Be the first to leave a travel review!',
     phTitle: 'Enter title', phPw: 'Password', phContent: 'Enter content details...',
     btnRegister: 'Submit', btnEditComplete: 'Update', btnCancel: 'Cancel', btnEdit: 'Edit', btnDelete: 'Delete',
-    botToggle: 'AI Chat', botClose: 'Close', botHeader: 'SeoulSpotter AI Guide', botSub: 'Ask anything about festivals, shopping, or tours!',
-    botLoading: 'Thinking of an answer...', botPh: 'e.g., Recommend attractions in Jongno-gu', botSend: 'Send', chatUser: 'Me', chatAi: 'AI Guide',
+    botToggle: 'AI Chat', botClose: 'Close', botHeader: 'SeoulSpotter AI Guide', botSub: 'Ask anything about attractions or travel courses!',
+    botLoading: 'Thinking of an answer...', botPh: 'e.g., Suggest a route in Jongno-gu', botSend: 'Send', chatUser: 'Me', chatAi: 'AI Guide',
     alertAll: 'Please fill in all fields!', alertWrongPw: 'Incorrect password!', alertEdit: 'Post updated.', alertReg: 'Post submitted.',
     alertEditMode: 'Enter password to modify.', alertPromptPw: 'Enter password to delete:', alertConfirmDel: 'Delete this post?', alertDelComplete: 'Deleted successfully.',
     '종로구': 'Jongno-gu', '중구': 'Jung-gu', '용산구': 'Yongsan-gu', '성동구': 'Seongdong-gu', '마포구': 'Mapo-gu', '강남구': 'Gangnam-gu', '영등포구': 'Yeongdeungpo-gu', '동작구': 'Dongjak-gu'
   },
   zh: {
-    logo: '首尔观光 (SeoulGugyeong)', navHome: '首页 (按区查看)', navBoard: '旅游社区',
-    heroTitle: '您想去哪个区旅游？', heroSub: '在地图上查看首尔各区的定制旅游信息和隐藏的TMI趣闻。',
+    logo: '首尔游 (SeoulTour)', navHome: '首页 (景点与路线)', navBoard: '旅游社区',
+    heroTitle: '您想去哪里游览？', heroSub: '在地图上查看首尔各行政区的定制旅游景点和推荐旅行路线。',
     selectDistrict: '请选择行政区', allSeoul: '首尔全境', noPlaces: '请选择一个区或点击其他分类查看！',
-    관광명소: '旅游景点', 문화시설: '文化设施', 쇼핑: '购物中心', '축제/행사': '庆典活动',
-    tmiTitle: '推荐景点 TMI趣闻', tmiPlace: '景点名称',
-    boardTitle: '匿名旅游留言板', boardSub: '自由分享您的首尔旅行攻略和心得。（修改/删除需设密码）',
-    writePost: '✍️ 撰写新帖子', editPost: '📝 编辑帖子', postCount: '已注册的帖子', noPosts: '成为第一个留下故事的主角吧！',
-    phTitle: '请输入标题', phPw: '修改/删除密码', phContent: '请输入详细内容...',
+    관광명소: '旅游景点', 여행경로: '推荐旅行路线',
+    tmiTitle: '推荐景点 TMI趣闻', tmiPlace: '代表景点',
+    boardTitle: '匿名旅游留言板', boardSub: '自由分享您的首尔旅游攻略和路线心得。',
+    writePost: '✍️ 撰写新帖子', editPost: '📝 编辑帖子', postCount: '已注册的帖子', noPosts: '成为第一个留下旅行故事的主角吧！',
+    phTitle: '请输入标题', phPw: '密码', phContent: '请输入详细内容...',
     btnRegister: '提交发布', btnEditComplete: '完成修改', btnCancel: '取消', btnEdit: '编辑', btnDelete: '删除',
-    botToggle: 'AI助手', botClose: '关闭', botHeader: 'SeoulSpotter 智能导游', botSub: '欢迎咨询关于首尔节日、购物或景点的任何问题！',
-    botLoading: '正在思考答案，请稍候...', botPh: '例如：推荐钟路区的旅游景点', botSend: '发送', chatUser: '我', chatAi: 'AI导游',
+    botToggle: 'AI助手', botClose: '关闭', botHeader: 'SeoulSpotter 智能导游', botSub: '欢迎咨询关于首尔景点及旅游路线的任何问题！',
+    botLoading: '正在思考答案，请稍候...', botPh: '例如：帮我规划钟路区旅游路线', botSend: '发送', chatUser: '我', chatAi: 'AI导游',
     alertAll: '请填写所有栏目！', alertWrongPw: '密码错误！', alertEdit: '帖子修改成功。', alertReg: '帖子发布成功。',
     alertEditMode: '请输入密码以修改内容。', alertPromptPw: '请输入密码以删除帖子：', alertConfirmDel: '确定要删除这条内容吗？', alertDelComplete: '删除成功。',
     '종로구': '钟路区', '중구': '中区', '용산구': '龙山区', '성동구': '城东区', '마포구': '麻浦区', '강남구': '江南区', '영등포구': '永登浦区', '동작구': '铜雀区'
@@ -215,63 +214,23 @@ const t = (key) => messages[locale.value][key] || key;
 const currentTab = ref('home');
 const selectedDistrict = ref('');
 const selectedCategory = ref('관광명소');
-const categories = ['관광명소', '문화시설', '쇼핑', '축제/행사'];
+const categories = ['관광명소', '여행경로']; // 오직 2개 카테고리만 정의
 const districts = ['종로구', '중구', '용산구', '성동구', '마포구', '강남구', '영등포구', '동작구'];
 
 const allLocations = ref([]);
 let map = null;
 let currentMarker = null;
 
-// --- 3개국어 완벽 지원하는 추천 관광지 및 TMI DB 데이터 ---
+// 각 구별 상세 랜드마크 정보 (위경도 포함)
 const districtTmiData = {
-  '종로구': { 
-    placeName: '경복궁', placeNameEn: 'Gyeongbokgung Palace', placeNameZh: '景福宫',
-    tmi: '경복궁의 정문인 광화문 현판의 글씨는 하얀색 바탕에 검은 글씨가 아니라, 고증을 통해 검은색 바탕에 금박 글씨로 재탄생했습니다.',
-    tmiEn: 'The Gwanghwamun signboard was restored to gold letters on a black background after historic research, replacing the old white plate!',
-    tmiZh: '景福宫正门光化门匾额上的字，经过历史考证，已由白底黑字重新调整为黑底金箔字，恢复了其本来面貌。'
-  },
-  '중구': { 
-    placeName: 'N서울타워', placeNameEn: 'N Seoul Tower', placeNameZh: 'N首尔塔',
-    tmi: 'N서울타워 조명의 색상은 서울의 실시간 초미세먼지 농도를 나타냅니다. 파란색인 날은 공기가 아주 맑다는 뜻이에요!',
-    tmiEn: 'The tower light colors indicate fine dust levels. Blue means the air quality is super clean and perfect for sightseeing!',
-    tmiZh: 'N首尔塔照明的颜色代表首尔的实时细颗粒物(PM2.5)浓度。显示蓝色的日子说明空气非常清新！'
-  },
-  '용산구': { 
-    placeName: '국립중앙박물관', placeNameEn: 'National Museum of Korea', placeNameZh: '韩国国立中央博物馆',
-    tmi: '세계에서 6번째로 큰 규모를 자랑하는 박물관입니다. 야외 거울못에 비치는 박물관 모습은 완벽한 포토존입니다.',
-    tmiEn: 'Ranked 6th largest museum in the world! The outdoor Mirror Pond reflects the main building beautifully as a popular photo zone.',
-    tmiZh: '该博物馆规模位居世界第六。室外“镜池”倒映出的博物馆全景是极佳的网红拍照打卡点。'
-  },
-  '성동구': { 
-    placeName: '서울숲', placeNameEn: 'Seoul Forest', placeNameZh: '首尔林',
-    tmi: '과거 이곳은 임금의 사냥터이자 서울 최초의 상수도 수원지였고, 경마장으로도 쓰였던 거대한 역사를 가진 숲이랍니다.',
-    tmiEn: 'This park has a huge history—it was once a royal hunting ground, Seouls very first water purification plant, and a horse racing track!',
-    tmiZh: '这里过去曾是国王的狩猎场、首尔最早的自来水水源地，还曾被用作赛马场，是一座承载着丰富历史的森林。'
-  },
-  '마포구': { 
-    placeName: '홍대 걷고싶은거리', placeNameEn: 'Hongdae Walkable Street', placeNameZh: '弘大想漫步的小街',
-    tmi: '이곳 거리는 과거에 당인리 발전소로 석탄을 실어 나르던 철길(당인리선)이 있던 자리를 덮어서 만든 낭만 가득한 거리입니다.',
-    tmiEn: 'This trendy indie street was built directly over old railway tracks (Danginri Line) that once carried coal to a nearby power plant.',
-    tmiZh: '这条街道过去是向唐人里发电厂运送煤炭的铁路线（唐人里线）所在地，后来将其改建成了如今充满浪漫气息的街区。'
-  },
-  '강남구': { 
-    placeName: '별마당 도서관', placeNameEn: 'Starfield Library', placeNameZh: '星空图书馆',
-    tmi: '높이 13m에 달하는 초대형 서가로 유명하며, 매년 전 세계 아티스트들과 협업하여 중앙 공간의 대형 트리가 바뀝니다.',
-    tmiEn: 'Famous for its massive 13-meter tall bookshelves. Every year, it unveils a uniquely themed giant center art piece.',
-    tmiZh: '这里因高达13米的超大型书架而闻名，每年都会与全球艺术家合作，在中央广场更换不同主题的大型艺术装置。'
-  },
-  '영등포구': { 
-    placeName: '여의도 한강공원', placeNameEn: 'Yeouido Hangang Park', placeNameZh: '汝矣岛汉江公园',
-    tmi: '여의도 한강공원에서 배달 음식을 시킬 때는 꼭 지정된 "배달존(1~3호)" 번호를 확인하고 주문해야 라이더님과 만날 수 있습니다.',
-    tmiEn: 'Tip: When ordering food delivery here, you must pick it up at designated "Delivery Zones (No. 1-3)" to successfully meet your rider.',
-    tmiZh: '在此叫外卖时，必须确认并前往指定的“外卖区（1-3号）”，才能顺利拿到外卖小哥送来的美食。'
-  },
-  '동작구': { 
-    placeName: '노량진 수산시장', placeNameEn: 'Noryangjin Fisheries Market', placeNameZh: '鹭梁津水产市场',
-    tmi: '대한민국 최대의 수산물 전문 도매시장으로, 새벽 1~3시 사이에 방문하면 생동감 넘치는 실시간 경매 현장을 직관할 수 있습니다.',
-    tmiEn: 'One of Koreas largest seafood markets. Visit between 1:00 AM and 3:00 AM to witness the high-energy live seafood auctions firsthand!',
-    tmiZh: '作为韩国最大的水产品专业批发市场，如果选择在凌晨1点至3点之间前往，可以亲眼目睹活力四射的实时拍卖现场。'
-  }
+  '종로구': { lat: 37.5796, lng: 126.9770, placeName: '경복궁', placeNameEn: 'Gyeongbokgung Palace', placeNameZh: '景福宫', tmi: '광화문 현판의 글씨는 고증을 통해 검은색 바탕에 금박 글씨로 재탄생했습니다.', tmiEn: 'The Gwanghwamun signboard was restored to gold letters on a black background.', tmiZh: '光化门匾额已由白底黑字恢复为黑底金箔字。' },
+  '중구': { lat: 37.5512, lng: 126.9882, placeName: 'N서울타워', placeNameEn: 'N Seoul Tower', placeNameZh: 'N首尔塔', tmi: '조명 색상은 서울의 미세먼지 농도입니다. 파란색은 공기가 맑다는 뜻입니다.', tmiEn: 'The tower lights show fine dust levels. Blue means the air is clean.', tmiZh: '照明颜色代表实时微尘浓度。蓝色说明空气非常清新！' },
+  '용산구': { lat: 37.5240, lng: 126.9804, placeName: '국립중앙박물관', placeNameEn: 'National Museum of Korea', placeNameZh: '韩国国立中央博物馆', tmi: '세계에서 6번째로 큰 박물관이며 야외 거울못은 완벽한 포토존입니다.', tmiEn: 'Ranked 6th largest in the world. The outdoor Mirror Pond is a top photo zone.', tmiZh: '规模位居世界第六。室外“镜池”倒映出的建筑全景是极佳的打卡点。' },
+  '성동구': { lat: 37.5443, lng: 127.0374, placeName: '서울숲', placeNameEn: 'Seoul Forest', placeNameZh: '首尔林', tmi: '과거 임금의 사냥터이자 서울 최초의 상수도 수원지였습니다.', tmiEn: 'Once a royal hunting ground and Seouls first water purification plant.', tmiZh: '这里过去曾是国王的狩猎场以及首尔最早的自来水水源地。' },
+  '마포구': { lat: 37.5558, lng: 126.9240, placeName: '홍대 걷고싶은거리', placeNameEn: 'Hongdae Walkable Street', placeNameZh: '弘大想漫步的小街', tmi: '과거 당인리 발전소로 석탄을 실어 나르던 철길 자리를 꾸민 거리입니다.', tmiEn: 'Built over old railway tracks that carried coal to a power plant.', tmiZh: '由过去向唐人里发电厂运送煤炭的铁路线改建而成的浪漫街区。' },
+  '강남구': { lat: 37.5113, lng: 127.0596, placeName: '별마당 도서관', placeNameEn: 'Starfield Library', placeNameZh: '星空图书馆', tmi: '높이 13m의 서가로 유명하며, 매년 중앙의 대형 트리가 바뀝니다.', tmiEn: 'Famous for 13-meter tall bookshelves and its changing giant art tree.', tmiZh: '因高达13米的超大型书架而闻名，每年都会更换大艺术装置。' },
+  '영등포구': { lat: 37.5284, lng: 126.9331, placeName: '여의도 한강공원', placeNameEn: 'Yeouido Hangang Park', placeNameZh: '汝矣岛汉江公园', tmi: '배달 음식을 시킬 때는 꼭 지정된 배달존(1~3호) 번호를 확인해야 합니다.', tmiEn: 'You must pick up delivery food at designated Delivery Zones (No. 1-3).', tmiZh: '在此叫外卖时，必须前往指定的“外卖区（1-3号）”取餐。' },
+  '동작구': { lat: 37.5144, lng: 126.9408, placeName: '노량진 수산시장', placeNameEn: 'Noryangjin Fisheries Market', placeNameZh: '鹭梁津水产市场', tmi: '새벽 1~3시 사이에 방문하면 생동감 넘치는 실시간 경매를 볼 수 있습니다.', tmiEn: 'Visit between 1:00 AM and 3:00 AM to witness live high-energy auctions.', tmiZh: '如果选择在凌晨1点至3点之间前往，可以亲眼目睹活力四射的拍卖。' }
 };
 
 const currentTmi = computed(() => districtTmiData[selectedDistrict.value] || null);
@@ -290,35 +249,16 @@ const getTmiDescription = () => {
   return currentTmi.value.tmi;
 };
 const getPlaceTitleFormatted = (title) => {
-  if (locale.value === 'en') return `[Spot] ${title}`;
-  if (locale.value === 'zh') return `[首尔景点] ${title}`;
+  if (locale.value === 'en') return `[Spot/Route] ${title}`;
+  if (locale.value === 'zh') return `[首尔景点/路线] ${title}`;
   return title;
 };
 
-// --- 익명 게시판 및 챗봇 변수 ---
-const posts = ref([]);
-const selectedPost = ref(null);
-const isEditing = ref(false);
-const editingId = ref(null);
-const boardForm = ref({ title: '', password: '', content: '' });
-
-const isChatOpen = ref(false);
-const userInput = ref('');
-const chatMessages = ref([]);
-const isChatLoading = ref(false);
-const messageBox = ref(null);
-
-// 언어 변경 감지 및 챗봇 웰컴메시지 번역 자동 업데이트
-watch(locale, (newLng) => {
-  let content = '안녕하세요! 서울구경 가이드입니다. 궁금한 점을 물어보세요!';
-  if (newLng === 'en') content = 'Hello! I am your Seoul tour guide. Feel free to ask me anything about Seoul!';
-  if (newLng === 'zh') content = '您好！我是首尔旅游智能导游。有什么关于首尔旅游的问题都可以问我哦！';
-  chatMessages.value = [{ role: 'assistant', content }];
-}, { immediate: true });
-
 onMounted(() => {
-  const tours = (tourData.items || []).map((item, idx) => ({ ...item, source: idx % 2 === 0 ? '관광명소' : '문화시설' }));
-  const courses = (courseData.items || []).map((item, idx) => ({ ...item, source: idx % 2 === 0 ? '쇼핑' : '축제/행사' }));
+  // tourData는 모두 '관광명소'로 지정
+  const tours = (tourData.items || []).map(item => ({ ...item, source: '관광명소' }));
+  // courseData는 모두 '여행경로'로 지정
+  const courses = (courseData.items || []).map(item => ({ ...item, source: '여행경로' }));
   allLocations.value = [...tours, ...courses];
 
   const savedPosts = localStorage.getItem('seoul_board_posts');
@@ -334,9 +274,13 @@ watch(currentTab, async (newTab) => {
   }
 });
 
-watch(locale, () => {
+watch(locale, (newLng) => {
+  let content = '안녕하세요! 서울 관광/경로 안내 가이드입니다. 무엇이든 물어보세요!';
+  if (newLng === 'en') content = 'Hello! I am your Seoul tour guide. Feel free to ask about attractions or routes!';
+  if (newLng === 'zh') content = '您好！我是首尔旅游智能导游。有什么关于景点或路线的问题都可以问我哦！';
+  chatMessages.value = [{ role: 'assistant', content }];
   if (selectedDistrict.value) handleDistrictChange();
-});
+}, { immediate: true });
 
 // --- Leaflet 지도 제어 로직 ---
 const initMap = () => {
@@ -381,6 +325,7 @@ const handleDistrictChange = () => {
   }
 };
 
+// 필터링 시스템: '관광명소' 또는 '여행경로'만 필터링
 const filteredPlaces = computed(() => {
   return allLocations.value.filter(place => {
     const matchDistrict = selectedDistrict.value ? (place.addr1 && place.addr1.includes(selectedDistrict.value)) : true;
@@ -390,6 +335,12 @@ const filteredPlaces = computed(() => {
 });
 
 // --- 익명 게시판 CRUD 로직 ---
+const posts = ref([]);
+const selectedPost = ref(null);
+const isEditing = ref(false);
+const editingId = ref(null);
+const boardForm = ref({ title: '', password: '', content: '' });
+
 const updateLocalStorage = () => localStorage.setItem('seoul_board_posts', JSON.stringify(posts.value));
 const resetForm = () => { boardForm.value = { title: '', password: '', content: '' }; isEditing.value = false; editingId.value = null; };
 const selectPost = (post) => { selectedPost.value = selectedPost.value?.id === post.id ? null : post; };
@@ -419,6 +370,12 @@ const deletePost = (post) => {
 };
 
 // --- OpenAI 챗봇 자연어 연동 ---
+const userInput = ref('');
+const chatMessages = ref([]);
+const isChatOpen = ref(false);
+const isChatLoading = ref(false);
+const messageBox = ref(null);
+
 const askChatbot = async () => {
   if (!userInput.value.trim() || isChatLoading.value) return;
   const userQuery = userInput.value;
@@ -443,7 +400,7 @@ const askChatbot = async () => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: `You are 'SeoulSpotter' AI Guide. Answer questions in the language the user speaks. If they use Chinese, reply in Chinese. The interface language chosen by user is ${locale.value}.\nContext data:\n${contextData}` },
+          { role: 'system', content: `You are 'SeoulSpotter' AI Guide specializing in Attractions and Travel Routes. Answer in the language the user speaks. Interface language is ${locale.value}.\nContext data:\n${contextData}` },
           { role: 'user', content: userQuery }
         ]
       })
@@ -496,9 +453,7 @@ const askChatbot = async () => {
 .card h3 { font-size: 13px; margin: 8px 0; line-height: 1.4; }
 .badge { display: inline-block; padding: 3px 6px; font-size: 10px; border-radius: 4px; color: white; font-weight: bold; }
 .badge.관광명소 { background-color: #3182ce; }
-.badge.문화시설 { background-color: #38a169; }
-.badge.쇼핑 { background-color: #e53e3e; }
-.badge.축제\/행사 { background-color: #dd6b20; }
+.badge.여행경로 { background-color: #9f7aea; }
 .addr { font-size: 11px; color: #777; }
 
 /* 커뮤니티 게시판 */
