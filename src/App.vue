@@ -6,7 +6,9 @@ import 'leaflet/dist/leaflet.css';
 
 // 방금 만든 챗봇 컴포넌트 불러오기
 import ChatBot from './components/ChatBot.vue';
-
+fetch('/seoul_trip.json')
+  .then(res => res.json())
+  .then(data => { ... })
 const locale = ref('ko'); 
 
 const messages = {
